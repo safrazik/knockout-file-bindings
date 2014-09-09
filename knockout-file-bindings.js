@@ -32,9 +32,9 @@
             clearButtonClass: 'custom-file-input-clear-button',
             buttonTextClass: 'custom-file-input-button-text',
         },
-        customFileInputDefaultOptions: {
+        defaultOptions: {
             wrapperClass: 'input-group',
-            fileNameClass: 'disabled',
+            fileNameClass: 'disabled form-control',
             noFileText: 'No file chosen',
             buttonGroupClass: 'input-group-btn',
             buttonClass: 'btn btn-primary',
@@ -153,7 +153,7 @@
             var target = ko.utils.unwrapObservable(fileData.target);
 
             if (target && !element.dataset.fileDragInjected) {
-
+                element.classList.add('filedrag');
                 element.ondragover = element.ondragleave = element.ondrop = function(e) {
                     e.stopPropagation();
                     e.preventDefault();
@@ -187,7 +187,7 @@
             }
             //*
             var sysOpts = fileBindings.customFileInputSystemOptions;
-            var defOpts = fileBindings.customFileInputDefaultOptions;
+            var defOpts = fileBindings.defaultOptions;
 
             var $element = $(element);
             var $wrapper = $('<span>').addClass(sysOpts.wrapperClass).addClass(defOpts.wrapperClass);
@@ -210,7 +210,7 @@
             }
 
             var sysOpts = fileBindings.customFileInputSystemOptions;
-            var defOpts = fileBindings.customFileInputDefaultOptions;
+            var defOpts = fileBindings.defaultOptions;
 
             options = $.extend(defOpts, options);
 
@@ -260,5 +260,6 @@
         }
     };
 
+    ko.fileBindings = fileBindings;
     return fileBindings;
 }));
