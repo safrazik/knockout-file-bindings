@@ -102,7 +102,7 @@ Recommended:
 **View**
 ```html
 <div class="well" data-bind="fileDrag: fileData">
-    <div class="form-group">
+    <div class="form-group row">
         <div class="col-md-6">
             <img style="height: 125px;" class="img-rounded  thumb" data-bind="attr: { src: fileData().dataURL }, visible: fileData().dataURL">
             <div data-bind="ifnot: fileData().dataURL">
