@@ -3,6 +3,8 @@ knockout-file-bindings
 
 HTML5 File bindings for knockout js with drag and drop support and custom input buttons
 
+## [See it in action](http://codepen.io/mrsafraz/pen/uIrwC)
+
 ## Basic Usage
 
 
