@@ -65,7 +65,6 @@
                     fileData.objectURL = fileData.objectUrl;
                 }
                 fileData.file = fileData.file || ko.observable();
-                fileData.target = fileData.target || ko.observable(element);
 
                 var file = this.files[0];
                 if (file) {
@@ -150,9 +149,8 @@
     ko.bindingHandlers.fileDrag = {
         update: function(element, valueAccessor, allBindingsAccessor) {
             var fileData = ko.utils.unwrapObservable(valueAccessor()) || {};
-            var target = ko.utils.unwrapObservable(fileData.target);
 
-            if (target && !element.dataset.fileDragInjected) {
+            if (!element.dataset.fileDragInjected) {
                 element.classList.add('filedrag');
                 element.ondragover = element.ondragleave = element.ondrop = function(e) {
                     e.stopPropagation();
