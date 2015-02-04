@@ -122,7 +122,7 @@
             //     property = properties[i];
             ['binaryString', 'text', 'dataURL', 'arrayBuffer'].forEach(function(property){
                 var method = 'readAs' + (property.substr(0, 1).toUpperCase() + property.substr(1));
-                if (property != 'dataURL' && fileData[property] && ko.isObservable(fileData[property])) {
+                if (property != 'dataURL' && !(fileData[property] && ko.isObservable(fileData[property]))) {
                     return true;
                 }
                 if (!file) {
