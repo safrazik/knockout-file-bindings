@@ -150,7 +150,7 @@
         update: function(element, valueAccessor, allBindingsAccessor) {
             var fileData = ko.utils.unwrapObservable(valueAccessor()) || {};
 
-            if (!element.dataset.fileDragInjected) {
+            if (!$(element).data("fileDragInjected")) {
                 element.classList.add('filedrag');
                 element.ondragover = element.ondragleave = element.ondrop = function(e) {
                     e.stopPropagation();
@@ -173,7 +173,7 @@
                     }
                 };
 
-                element.dataset.fileDragInjected = true;
+                $(element).data("fileDragInjected", true);
             }
         }
     };
