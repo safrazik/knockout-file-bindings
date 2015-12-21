@@ -210,7 +210,7 @@
             var sysOpts = fileBindings.customFileInputSystemOptions;
             var defOpts = fileBindings.defaultOptions;
 
-            options = $.extend(defOpts, options);
+            options = $.extend({}, defOpts, options);
 
             var allBindings = allBindingsAccessor();
             if (!allBindings.fileInput) {
