@@ -6,10 +6,7 @@
     "Muhammad Safraz <mr.safraz@gmail.com>"
   ],
   "description": "HTML5 File bindings for knockout js with drag and drop and custom input buttons",
-  "main": [
-    "knockout-file-bindings.js",
-    "knockout-file-bindings.css"
-  ],
+  "main":"knockout-file-bindings.js",
   "keywords": [
     "knockoutjs",
     "html5",
