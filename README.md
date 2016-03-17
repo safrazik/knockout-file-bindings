@@ -28,13 +28,22 @@ viewModel.fileData().dataURL.subscribe(function(dataURL){
 With custom file input (`knockout-file-bindings.css` should be included)
 ```html
 <!-- with custom file input: -->
-<input type="file" data-bind="fileInput: fileData, , customFileInput: {}">
+<input type="file" data-bind="fileInput: fileData, customFileInput: {}">
 ```
 
-with Drag and Drop container (`knockout-file-bindings.css` should be included)
+With Drag and Drop container (`knockout-file-bindings.css` should be included)
 ```html
 <div data-bind="fileDrag: fileData">
-  <input type="file" data-bind="fileInput: fileData, , customFileInput: {}">
+  <input type="file" data-bind="fileInput: fileData, customFileInput: {}">
+</div>
+```
+
+With a __multiple file__ Drag and Drop container (`knockout-file-bindings.css` should be included)
+```html
+<div data-bind="multiFileDrag: fileDataArray">
+  <!-- ko foreach: fileDataArray -->	
+  <input type="file" data-bind="fileInput: $data, customFileInput: {}">
+  <!-- /ko -->
 </div>
 ```
 
@@ -45,7 +54,7 @@ with an Upload preview
     <img data-bind="attr: { src: fileData().dataURL }, visible: fileData().dataURL">
   </div>
   <div class="image-upload-input">
-    <input type="file" data-bind="fileInput: fileData, , customFileInput: {}">
+    <input type="file" data-bind="fileInput: fileData, customFileInput: {}">
   </div>
 </div>
 ```
@@ -76,6 +85,7 @@ ko.fileBindings.defaultOptions = {
 // change a default option
 ko.fileBindings.defaultOptions.buttonText = 'Browse';
 
+// If you're working with a single file
 viewModel.fileData = ko.observable({
   file: ko.observable(), // will be filled with a File object
   // Read the files (all are optional, e.g: if you're certain that it is a text file, use only text:
@@ -87,6 +97,9 @@ viewModel.fileData = ko.observable({
   // a special observable (optional)
   base64String: ko.observable(), // just the base64 string, without mime type or anything else
 });
+
+// Or, if you're working with multiple file drag and drop
+viewModel.fileDataArray = ko.observableArray([]); // fields will be populated for you as files are dropped into the container, but the names and functions are the same as above.
 
 viewModel.fileData().text.subscribe(function(text){
   // do something

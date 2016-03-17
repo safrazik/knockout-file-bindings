@@ -109,17 +109,11 @@
 
 
             if (fileData.base64String && ko.isObservable(fileData.base64String)) {
-                if (fileData.dataURL && ko.isObservable(fileData.dataURL)) {
-                    // will be handled
-                }
-                else {
+                if (!(fileData.dataURL && ko.isObservable(fileData.dataURL))) {
                     fileData.dataURL = ko.observable(); // hack
                 }
             }
 
-            // var properties = ['binaryString', 'text', 'dataURL', 'arrayBuffer'], property;
-            // for(var i = 0; i < properties.length; i++){
-            //     property = properties[i];
             ['binaryString', 'text', 'dataURL', 'arrayBuffer'].forEach(function(property){
                 var method = 'readAs' + (property.substr(0, 1).toUpperCase() + property.substr(1));
                 if (property != 'dataURL' && !(fileData[property] && ko.isObservable(fileData[property]))) {
@@ -178,12 +172,61 @@
         }
     };
 
+    ko.bindingHandlers.multiFileDrag = {
+        update: function (element, valueAccessor, allBindingsAccessor) {
+            if ($(element).data("fileDragInjected"))
+                return;
+
+            element.classList.add('filedrag');
+
+            element.ondrop = function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                if (!e.dataTransfer)
+                    return;
+
+                var files = e.dataTransfer.files;
+
+                var fileArray = valueAccessor();
+                if (ko.isObservable(fileArray()))
+                    fileArray = fileArray();
+
+                // Using a for here instead of forEach since FileList doesn't implement forEach.
+                for (var i = 0; i < files.length; i++) {
+                    fileArray.push({
+                        file: ko.observable(files[i]),
+                        binaryString: ko.observable(),
+                        text: ko.observable(),
+                        dataURL: ko.observable(),
+                        arrayBuffer: ko.observable(),
+                        base64String: ko.observable()
+                    });
+                }
+            };
+
+            element.ondragover = function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                element.classList.add('hover');
+            };
+
+            element.ondragleave = function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                element.classList.remove('hover');
+            };
+
+            $(element).data("fileDragInjected", true);
+        }
+    };
+
     ko.bindingHandlers.customFileInput = {
         init: function(element, valueAccessor, allBindingsAccessor) {
             if (ko.utils.unwrapObservable(valueAccessor()) === false) {
                 return;
             }
-            //*
+            
             var sysOpts = fileBindings.customFileInputSystemOptions;
             var defOpts = fileBindings.defaultOptions;
 
@@ -249,10 +292,7 @@
             $clearButton.addClass(ko.utils.unwrapObservable(options.clearButtonClass));
 
 
-            if (file && options.clearButton && file.name) {
-//                $clearButton.show();
-            }
-            else {
+            if (!(file && options.clearButton && file.name)) {
                 $clearButton.remove();
             }
         }
