@@ -89,6 +89,12 @@
                 }
             };
             element.onchange();
+            
+
+            ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+                var fileData = ko.utils.unwrapObservable(valueAccessor()) || {};
+                fileData.clear = undefined;
+            });
         },
         update: function(element, valueAccessor, allBindingsAccessor) {
 
