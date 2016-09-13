@@ -185,20 +185,37 @@
 
     ko.bindingHandlers.customFileInput = {
         init: function(element, valueAccessor, allBindingsAccessor) {
-            if (ko.utils.unwrapObservable(valueAccessor()) === false) {
+            var options = ko.utils.unwrapObservable(valueAccessor());
+            if (options === false) {
                 return;
             }
+            if (typeof options !== 'object') {
+                options = {};
+            }
+
             //*
             var sysOpts = fileBindings.customFileInputSystemOptions;
             var defOpts = fileBindings.defaultOptions;
 
+            options = $.extend({}, defOpts, options);
+
             var $element = $(element);
-            var $wrapper = $('<span>').addClass(sysOpts.wrapperClass).addClass(defOpts.wrapperClass);
-            var $buttonGroup = $('<span>').addClass(sysOpts.buttonGroupClass).addClass(defOpts.buttonGroupClass);
+            var $wrapper = $('<span>').addClass(sysOpts.wrapperClass).addClass(options.wrapperClass);
+            var $buttonGroup = $('<span>').addClass(sysOpts.buttonGroupClass).addClass(options.buttonGroupClass);
             $buttonGroup.append($('<span>').addClass(sysOpts.buttonClass));
             $element.wrap($wrapper).wrap($buttonGroup);
             var $buttonGroup = $element.parent('.' + sysOpts.buttonClass).parent();
-            $buttonGroup.before($('<input>').attr('type', 'text').attr('disabled', 'disabled').addClass(sysOpts.fileNameClass));
+            if(options.fileName){
+                $buttonGroup.before($('<input>').attr('type', 'text').attr('disabled', 'disabled').addClass(sysOpts.fileNameClass));
+                if($buttonGroup.hasClass('btn-group')){
+                    $buttonGroup.removeClass('btn-group').addClass('input-group-btn');
+                }
+            }
+            else {
+                if($buttonGroup.hasClass('input-group-btn')){
+                    $buttonGroup.removeClass('input-group-btn').addClass('btn-group');
+                }
+            }
             $element.before($('<span>').addClass(sysOpts.buttonTextClass));
 
         },
@@ -207,8 +224,7 @@
             if (options === false) {
                 return;
             }
-            options = options || {};
-            if (options && typeof options !== 'object') {
+            if (typeof options !== 'object') {
                 options = {};
             }
 
