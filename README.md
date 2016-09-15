@@ -8,7 +8,6 @@ HTML5 File bindings for knockout js with drag and drop support and custom input 
 ## Basic Usage
 
 
-
 **View Model**
 ```javascript
 viewModel.fileData = ko.observable({
@@ -19,6 +18,9 @@ viewModel.fileData().dataURL.subscribe(function(dataURL){
   // dataURL has changed do something with it!
 });
 ```
+
+along with `dataURL`, you can have any of `bindaryString`, `text`,  `arrayBuffer` or `base64String` based on your needs. See [Anvanced Usage](#advanced-usage) section below
+
 
 **View**
 ```html
@@ -86,6 +88,10 @@ viewModel.fileData = ko.observable({
   
   // a special observable (optional)
   base64String: ko.observable(), // just the base64 string, without mime type or anything else
+  
+  // you can have observable arrays for each of the properties above, useful in multiple file upload selection (see Multiple file Uploads section below)
+  // in the format of xxxArray: ko.observableArray(),
+  /* e.g: */ fileArray: ko.observableArray(), base64StringArray: ko.observableArray(),
 });
 
 viewModel.fileData().text.subscribe(function(text){
@@ -119,4 +125,36 @@ Recommended:
         </div>
     </div>
 </div>
+```
+
+## Multiple file Uploads
+
+**View**
+
+To support multiple files to be selected, you should add HTML5 `multiple` attribute
+
+```html
+<input type="file" multiple data-bind="fileInput: fileData">
+```
+
+**View Model**
+
+you should have the `fileData` object exactly like above, except you can add `xxxArray` observable array properties where `xxx` is either `file`, `bindaryString`, `text`, `dataURL`, `arrayBuffer` or `base64String`
+```javascript
+viewModel.fileData = ko.observable({
+  file: ko.observable(), dataURL: ko.observable(), // you can still have the above methods if you want to focus on the first file
+  
+  // xxxArray: ko.observableArray(), all are optional
+  fileArray: ko.observableArray(),
+  binaryStringArray: ko.observableArray(),
+  textArray: ko.observableArray(),
+  dataURLArray: ko.observableArray(),
+  arrayBufferArray: ko.observableArray(),
+  base64StringArray: ko.observableArray(),
+
+});
+
+viewModel.fileData().fileArray.subscribe(function(fileArray){
+  // fileArray has changed do something with it!
+});
 ```
