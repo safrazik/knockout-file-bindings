@@ -65,23 +65,38 @@
                     fileData.objectURL = fileData.objectUrl;
                 }
                 fileData.file = fileData.file || ko.observable();
+                fileData.fileArray = fileData.fileArray || ko.observableArray([]);
 
                 var file = this.files[0];
+                fileData.fileArray([]);
                 if (file) {
+                    var fileArray = [];
+                    for(var i = 0; i < this.files.length; i++){ // FileList is not an array
+                        fileArray.push(this.files[i]);
+                    }
+                    fileData.fileArray(fileArray); // set it once for subscriptions to work properly
                     fileData.file(file);
                 }
 
                 if (!fileData.clear) {
                     fileData.clear = function() {
-                        $.each(['file', 'objectURL', 'base64String', 'binaryString', 'text', 'dataURL', 'arrayBuffer'], function(i, property) {
-                            if (fileData[property] && ko.isObservable(fileData[property])) {
-                                if (property == 'objectURL') {
-                                    windowURL.revokeObjectURL(fileData.objectURL());
+                        $.each(['objectURL', 'base64String', 'binaryString', 'text', 'dataURL', 'arrayBuffer'], function(i, property) {
+                            if (fileData[property + 'Array'] && ko.isObservable(fileData[property + 'Array'])) {
+                                var values = fileData[property + 'Array'];
+                                while(values().length) {
+                                    var val = values.splice(0, 1);
+                                    if (property == 'objectURL') {
+                                        windowURL.revokeObjectURL(val);
+                                    }
                                 }
+                            }
+                            if (fileData[property] && ko.isObservable(fileData[property])) {
                                 fileData[property](null);
                             }
                         });
                         element.value = '';
+                        fileData.fileArray([]);
+                        fileData.file(null);
                     }
                 }
                 if (ko.isObservable(valueAccessor())) {
@@ -99,55 +114,67 @@
 
             var fileData = ko.utils.unwrapObservable(valueAccessor());
 
-            var file = ko.isObservable(fileData.file) && fileData.file();
+            function fillData(file, index){
 
-            if (fileData.objectURL && ko.isObservable(fileData.objectURL)) {
-                var newUrl = file && windowURL.createObjectURL(file);
-                if (newUrl) {
-                    var oldUrl = fileData.objectURL();
-                    if (oldUrl) {
-                        windowURL.revokeObjectURL(oldUrl);
-                    }
-                    fileData.objectURL(newUrl);
-                }
-            }
-
-
-            if (fileData.base64String && ko.isObservable(fileData.base64String)) {
-                if (fileData.dataURL && ko.isObservable(fileData.dataURL)) {
-                    // will be handled
-                }
-                else {
-                    fileData.dataURL = ko.observable(); // hack
-                }
-            }
-
-            // var properties = ['binaryString', 'text', 'dataURL', 'arrayBuffer'], property;
-            // for(var i = 0; i < properties.length; i++){
-            //     property = properties[i];
-            ['binaryString', 'text', 'dataURL', 'arrayBuffer'].forEach(function(property){
-                var method = 'readAs' + (property.substr(0, 1).toUpperCase() + property.substr(1));
-                if (property != 'dataURL' && !(fileData[property] && ko.isObservable(fileData[property]))) {
-                    return true;
-                }
-                if (!file) {
-                    return true;
-                }
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    if (fileData[property]) {
-                        fileData[property](e.target.result);
-                    }
-                    if (method == 'readAsDataURL' && fileData.base64String && ko.isObservable(fileData.base64String)) {
-                        var resultParts = e.target.result.split(",");
-                        if (resultParts.length === 2) {
-                            fileData.base64String(resultParts[1]);
+                if (fileData.objectURL && ko.isObservable(fileData.objectURL)) {
+                    var newUrl = file && windowURL.createObjectURL(file);
+                    if (newUrl) {
+                        var oldUrl = fileData.objectURL();
+                        if (oldUrl) {
+                            windowURL.revokeObjectURL(oldUrl);
                         }
+                        fileData.objectURL(newUrl);
                     }
-                };
+                }
 
-                reader[method](file);
-            });
+
+                if (fileData.base64String && ko.isObservable(fileData.base64String)) {
+                    if (!(fileData.dataURL && ko.isObservable(fileData.dataURL))) {
+                        fileData.dataURL = ko.observable(); // adding on demand
+                    }
+                }
+                if (fileData.base64StringArray && ko.isObservable(fileData.base64StringArray)) {
+                    if (!(fileData.dataURLArray && ko.isObservable(fileData.dataURLArray))) {
+                        fileData.dataURLArray = ko.observableArray();
+                    }
+                }
+
+                ['binaryString', 'text', 'dataURL', 'arrayBuffer'].forEach(function(property){
+                    var method = 'readAs' + (property.substr(0, 1).toUpperCase() + property.substr(1));
+                    if (property != 'dataURL' && !(fileData[property] && ko.isObservable(fileData[property]))) {
+                        return true;
+                    }
+                    if (!file) {
+                        return true;
+                    }
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        function fillDataToProperty(result, prop){
+                            if (index == 0 && fileData[prop] && ko.isObservable(fileData[prop])) {
+                                fileData[prop](result);
+                            }
+                            if(fileData[prop + 'Array'] && ko.isObservable(fileData[prop + 'Array'])){
+                                if(index == 0){
+                                    fileData[prop + 'Array']([]);
+                                }
+                                fileData[prop + 'Array'].push(result);
+                            }
+                        }
+                        fillDataToProperty(e.target.result, property);
+                        if (method == 'readAsDataURL' && (fileData.base64String || fileData.base64StringArray)) {
+                            var resultParts = e.target.result.split(",");
+                            if (resultParts.length === 2) {
+                                fillDataToProperty(resultParts[1], 'base64String');
+                            }
+                        }
+                    };
+
+                    reader[method](file);
+                });
+            }
+            fileData.fileArray().forEach(function(file, index){
+                fillData(file, index);
+            })
         }
     };
 
@@ -169,7 +196,13 @@
                     if (e.type == 'drop' && e.dataTransfer) {
                         var files = e.dataTransfer.files;
                         var file = files[0];
+                        fileData.fileArray([]);
                         if (file) {
+                            var fileArray = [];
+                            for(var i = 0; i < files.length; i++){
+                                fileArray.push(files[i]);
+                            }
+                            fileData.fileArray(fileArray);
                             fileData.file(file);
                             if (ko.isObservable(valueAccessor())) {
                                 valueAccessor()(fileData);
@@ -193,7 +226,6 @@
                 options = {};
             }
 
-            //*
             var sysOpts = fileBindings.customFileInputSystemOptions;
             var defOpts = fileBindings.defaultOptions;
 
@@ -252,7 +284,13 @@
             $fileName.addClass(ko.utils.unwrapObservable(options.fileNameClass));
 
             if (file && file.name) {
-                $fileName.val(file.name);
+                if(fileData.fileArray().length > 2){
+                    $fileName.val(fileData.fileArray().length + ' files');
+                }
+                else {
+                    // $fileName.val(file.name);
+                    $fileName.val(fileData.fileArray().map(function(f){ return f.name }).join(', '));
+                }
             }
             else {
                 $fileName.val(ko.utils.unwrapObservable(options.noFileText));
