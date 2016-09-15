@@ -13,15 +13,15 @@
 
     if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
         // CommonJS or Node: hard-coded dependency on "knockout"
-        factory(require("knockout"), require("jquery"));
+        factory(require("knockout"));
     } else if (typeof define === "function" && define["amd"]) {
         // AMD anonymous module with hard-coded dependency on "knockout"
-        define(["knockout", "jquery"], factory);
+        define(["knockout"], factory);
     } else {
         // <script> tag: use the global `ko` object, attaching a `mapping` property
-        factory(ko, jQuery);
+        factory(ko);
     }
-}(function (ko, $) {
+}(function (ko) {
 
     var fileBindings = {
         customFileInputSystemOptions: {
@@ -52,6 +52,34 @@
         },
     }
 
+    function extendOptions(defaultOptions, newOptions) {
+        var options = {};
+        for (var prop in defaultOptions) {
+            options[prop] = typeof newOptions[prop] !== 'undefined' ? newOptions[prop] : defaultOptions[prop];
+        }
+        return options;
+    }
+
+    function addRemoveCssClass(element, cssClasses, type){
+        var cssClasses = Array.isArray(cssClasses) ? cssClasses : cssClasses.split(' ');
+        cssClasses.forEach(function(cssClass){
+            element.classList[type](cssClass);
+        });
+        return element;
+    }
+
+    function addCssClass(element, cssClasses){
+        return addRemoveCssClass(element, cssClasses, 'add');
+    }
+
+    function removeCssClass(element, cssClasses){
+        return addRemoveCssClass(element, cssClasses, 'remove');
+    }
+
+    function hasCssClass(element, cssClass){
+        return element.classList.contains(cssClass);
+    }
+
     var windowURL = window.URL || window.webkitURL;
 
     ko.bindingHandlers.fileInput = {
@@ -80,7 +108,7 @@
 
                 if (!fileData.clear) {
                     fileData.clear = function() {
-                        $.each(['objectURL', 'base64String', 'binaryString', 'text', 'dataURL', 'arrayBuffer'], function(i, property) {
+                        ['objectURL', 'base64String', 'binaryString', 'text', 'dataURL', 'arrayBuffer'].forEach(function(property, i) {
                             if (fileData[property + 'Array'] && ko.isObservable(fileData[property + 'Array'])) {
                                 var values = fileData[property + 'Array'];
                                 while(values().length) {
@@ -181,17 +209,16 @@
     ko.bindingHandlers.fileDrag = {
         update: function(element, valueAccessor, allBindingsAccessor) {
             var fileData = ko.utils.unwrapObservable(valueAccessor()) || {};
-
-            if (!$(element).data("fileDragInjected")) {
-                element.classList.add('filedrag');
+            if (!element.getAttribute("file-drag-injected")) {
+                addCssClass(element, 'filedrag');
                 element.ondragover = element.ondragleave = element.ondrop = function(e) {
                     e.stopPropagation();
                     e.preventDefault();
                     if(e.type == 'dragover'){
-                        element.classList.add('hover');
+                        addCssClass(element, 'hover');
                     }
                     else {
-                        element.classList.remove('hover');
+                        removeCssClass(element, 'hover');
                     }
                     if (e.type == 'drop' && e.dataTransfer) {
                         var files = e.dataTransfer.files;
@@ -211,7 +238,7 @@
                     }
                 };
 
-                $(element).data("fileDragInjected", true);
+                element.setAttribute("file-drag-injected", 1);
             }
         }
     };
@@ -229,26 +256,32 @@
             var sysOpts = fileBindings.customFileInputSystemOptions;
             var defOpts = fileBindings.defaultOptions;
 
-            options = $.extend({}, defOpts, options);
+            options = extendOptions(defOpts, options);
 
-            var $element = $(element);
-            var $wrapper = $('<span>').addClass(sysOpts.wrapperClass).addClass(options.wrapperClass);
-            var $buttonGroup = $('<span>').addClass(sysOpts.buttonGroupClass).addClass(options.buttonGroupClass);
-            $buttonGroup.append($('<span>').addClass(sysOpts.buttonClass));
-            $element.wrap($wrapper).wrap($buttonGroup);
-            var $buttonGroup = $element.parent('.' + sysOpts.buttonClass).parent();
+            var wrapper = addCssClass(document.createElement('span'), [sysOpts.wrapperClass, options.wrapperClass]);
+            var buttonGroup = addCssClass(document.createElement('span'), [sysOpts.buttonGroupClass, options.buttonGroupClass]);
+            var button = addCssClass(document.createElement('span'), sysOpts.buttonClass);
+            buttonGroup.appendChild(button);
+            wrapper.appendChild(buttonGroup);
+            element.parentNode.insertBefore(wrapper, element);
+            button.appendChild(element);
+
             if(options.fileName){
-                $buttonGroup.before($('<input>').attr('type', 'text').attr('disabled', 'disabled').addClass(sysOpts.fileNameClass));
-                if($buttonGroup.hasClass('btn-group')){
-                    $buttonGroup.removeClass('btn-group').addClass('input-group-btn');
+                var fileNameInput = document.createElement('input');
+                fileNameInput.setAttribute('type', 'text');
+                fileNameInput.setAttribute('disabled', 'disabled');
+                buttonGroup.parentNode.insertBefore(addCssClass(fileNameInput, sysOpts.fileNameClass), buttonGroup);
+                if(hasCssClass(buttonGroup, 'btn-group')){
+                    addCssClass(buttonGroup, removeCssClass(buttonGroup, 'btn-group'), 'input-group-btn');
                 }
             }
             else {
-                if($buttonGroup.hasClass('input-group-btn')){
-                    $buttonGroup.removeClass('input-group-btn').addClass('btn-group');
+                if(hasCssClass(buttonGroup, 'input-group-btn')){
+                    addCssClass(buttonGroup, removeCssClass(buttonGroup, 'input-group-btn'), 'btn-group');
                 }
             }
-            $element.before($('<span>').addClass(sysOpts.buttonTextClass));
+
+            element.parentNode.insertBefore(addCssClass(document.createElement('span'), sysOpts.buttonTextClass), element);
 
         },
         update: function(element, valueAccessor, allBindingsAccessor) {
@@ -263,7 +296,7 @@
             var sysOpts = fileBindings.customFileInputSystemOptions;
             var defOpts = fileBindings.defaultOptions;
 
-            options = $.extend({}, defOpts, options);
+            options = extendOptions(defOpts, options);
 
             var allBindings = allBindingsAccessor();
             if (!allBindings.fileInput) {
@@ -273,46 +306,43 @@
 
             var file = ko.utils.unwrapObservable(fileData.file);
 
-            var $button = $(element).parent();
-            var $buttonGroup = $button.parent();
+            var button = element.parentNode;
+            var buttonGroup = button.parentNode;
+            var wrapper = buttonGroup.parentNode;
 
-            var $wrapper = $buttonGroup.parent();
-            $button.addClass(ko.utils.unwrapObservable(options.buttonClass));
-            $button.find('.' + sysOpts.buttonTextClass)
-                    .html(ko.utils.unwrapObservable(file ? options.changeButtonText : options.buttonText));
-            var $fileName = $wrapper.find('.' + sysOpts.fileNameClass);
-            $fileName.addClass(ko.utils.unwrapObservable(options.fileNameClass));
+            addCssClass(button, ko.utils.unwrapObservable(options.buttonClass));
+            var buttonText = button.querySelector('.' + sysOpts.buttonTextClass);
+            buttonText.innerText = ko.utils.unwrapObservable(file ? options.changeButtonText : options.buttonText);
+            var fileNameInput = wrapper.querySelector('.' + sysOpts.fileNameClass);
+            addCssClass(fileNameInput, ko.utils.unwrapObservable(options.fileNameClass));
 
             if (file && file.name) {
                 if(fileData.fileArray().length > 2){
-                    $fileName.val(fileData.fileArray().length + ' files');
+                    fileNameInput.value = fileData.fileArray().length + ' files'; 
                 }
                 else {
-                    // $fileName.val(file.name);
-                    $fileName.val(fileData.fileArray().map(function(f){ return f.name }).join(', '));
+                    fileNameInput.value = fileData.fileArray().map(function(f){ return f.name }).join(', ');
                 }
             }
             else {
-                $fileName.val(ko.utils.unwrapObservable(options.noFileText));
+                fileNameInput.value = ko.utils.unwrapObservable(options.noFileText);
             }
 
-            var $clearButton = $buttonGroup.find('.' + sysOpts.clearButtonClass);
-            if (!$clearButton.length) {
-                $clearButton = $('<span>').addClass(sysOpts.clearButtonClass);
-                $clearButton.on('click', function(e) {
+            var clearButton = buttonGroup.querySelector('.' + sysOpts.clearButtonClass);
+            if (!clearButton) {
+                clearButton = addCssClass(document.createElement('span'), sysOpts.clearButtonClass);
+                clearButton.onclick = function(e){
                     options.onClear(fileData, options);
-                });
-                $buttonGroup.append($clearButton);
+                }
+                buttonGroup.appendChild(clearButton);
             }
-            $clearButton.html(ko.utils.unwrapObservable(options.clearButtonText));
-            $clearButton.addClass(ko.utils.unwrapObservable(options.clearButtonClass));
-
+            clearButton.innerText = ko.utils.unwrapObservable(options.clearButtonText);
+            addCssClass(clearButton, ko.utils.unwrapObservable(options.clearButtonClass));
 
             if (file && options.clearButton && file.name) {
-//                $clearButton.show();
             }
             else {
-                $clearButton.remove();
+                clearButton.parentNode.removeChild(clearButton);
             }
         }
     };
