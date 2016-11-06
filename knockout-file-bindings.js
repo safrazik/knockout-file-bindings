@@ -313,19 +313,21 @@
             addCssClass(button, ko.utils.unwrapObservable(options.buttonClass));
             var buttonText = button.querySelector('.' + sysOpts.buttonTextClass);
             buttonText.innerText = ko.utils.unwrapObservable(file ? options.changeButtonText : options.buttonText);
-            var fileNameInput = wrapper.querySelector('.' + sysOpts.fileNameClass);
-            addCssClass(fileNameInput, ko.utils.unwrapObservable(options.fileNameClass));
+            if(options.fileName){
+                var fileNameInput = wrapper.querySelector('.' + sysOpts.fileNameClass);
+                addCssClass(fileNameInput, ko.utils.unwrapObservable(options.fileNameClass));
 
-            if (file && file.name) {
-                if(fileData.fileArray().length > 2){
-                    fileNameInput.value = fileData.fileArray().length + ' files'; 
+                if (file && file.name) {
+                    if(fileData.fileArray().length > 2){
+                        fileNameInput.value = fileData.fileArray().length + ' files';
+                    }
+                    else {
+                        fileNameInput.value = fileData.fileArray().map(function(f){ return f.name }).join(', ');
+                    }
                 }
                 else {
-                    fileNameInput.value = fileData.fileArray().map(function(f){ return f.name }).join(', ');
+                    fileNameInput.value = ko.utils.unwrapObservable(options.noFileText);
                 }
-            }
-            else {
-                fileNameInput.value = ko.utils.unwrapObservable(options.noFileText);
             }
 
             var clearButton = buttonGroup.querySelector('.' + sysOpts.clearButtonClass);
