@@ -272,12 +272,12 @@
                 fileNameInput.setAttribute('disabled', 'disabled');
                 buttonGroup.parentNode.insertBefore(addCssClass(fileNameInput, sysOpts.fileNameClass), buttonGroup);
                 if(hasCssClass(buttonGroup, 'btn-group')){
-                    addCssClass(buttonGroup, removeCssClass(buttonGroup, 'btn-group'), 'input-group-btn');
+                    addCssClass(removeCssClass(buttonGroup, 'btn-group'), 'input-group-btn');
                 }
             }
             else {
                 if(hasCssClass(buttonGroup, 'input-group-btn')){
-                    addCssClass(buttonGroup, removeCssClass(buttonGroup, 'input-group-btn'), 'btn-group');
+                    addCssClass(removeCssClass(buttonGroup, 'input-group-btn'), 'btn-group');
                 }
             }
 
