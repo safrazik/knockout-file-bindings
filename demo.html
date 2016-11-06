@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Knockout File Bindings Demo</title>
+	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="knockout-file-bindings.css">
+	<style type="text/css">
+		.container {
+		  max-width: 750px;
+		  padding: 15px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+	  <h1>
+	  <a target="_blank" href="https://github.com/adrotec/knockout-file-bindings">knockout-file-bindings</a>
+	  </h1>
+	<div class="well" data-bind="fileDrag: fileData">
+	    <div class="form-group row">
+	        <div class="col-md-6">
+	            <img style="height: 125px;" class="img-rounded  thumb" data-bind="attr: { src: fileData().dataURL }, visible: fileData().dataURL">
+	            <div data-bind="ifnot: fileData().dataURL">
+	                <label class="drag-label">Drag file here</label>
+	            </div>
+	        </div>
+	        <div class="col-md-6">
+	            <input type="file" data-bind="fileInput: fileData, customFileInput: {
+	              buttonClass: 'btn btn-success',
+	              fileNameClass: 'disabled form-control',
+	              onClear: onClear,
+	            }" accept="image/*">
+	        </div>
+	    </div>
+	</div>
+
+	  <h3>Multiple File Uploads</h3>
+	<div class="well" data-bind="fileDrag: multiFileData">
+	    <div class="form-group row">
+	        <div class="col-md-6">
+	                  <!-- ko foreach: {data: multiFileData().dataURLArray, as: 'dataURL'} -->
+	                  <img style="height: 100px; margin: 5px;" class="img-rounded  thumb" data-bind="attr: { src: dataURL }, visible: dataURL">
+	                  <!-- /ko -->
+	            <div data-bind="ifnot: fileData().dataURL">
+	                <label class="drag-label">Drag files here</label>
+	            </div>
+	        </div>
+	        <div class="col-md-6">
+	            <input type="file" multiple data-bind="fileInput: multiFileData, customFileInput: {
+	              buttonClass: 'btn btn-success',
+	              fileNameClass: 'disabled form-control',
+	              onClear: onClear,
+	            }" accept="image/*">
+	        </div>
+	    </div>
+	</div>
+	  <button class="btn btn-default" data-bind="click: debug">Debug</button>
+	</div>
+
+<script src='http://cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js'></script><script src='knockout-file-bindings.js'></script>
+<script>
+    var viewModel = {};
+    viewModel.fileData = ko.observable({ dataURL: ko.observable() });
+    viewModel.multiFileData = ko.observable({ dataURLArray: ko.observableArray() });
+    viewModel.onClear = function (fileData) {
+        if (confirm('Are you sure?')) {
+            fileData.clear && fileData.clear();
+        }
+    };
+    viewModel.debug = function () {
+        window.viewModel = viewModel;
+        console.log(ko.toJSON(viewModel));
+        debugger;
+    };
+    ko.applyBindings(viewModel);
+</script>
+
+</body>
+</html>
