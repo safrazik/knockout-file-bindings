@@ -84,65 +84,36 @@
 
     ko.bindingHandlers.fileInput = {
         init: function(element, valueAccessor) {
-            element.onchange = function() {
-                var fileData = ko.utils.unwrapObservable(valueAccessor()) || {};
-                if (fileData.dataUrl) {
-                    fileData.dataURL = fileData.dataUrl;
-                }
-                if (fileData.objectUrl) {
-                    fileData.objectURL = fileData.objectUrl;
-                }
-                fileData.file = fileData.file || ko.observable();
-                fileData.fileArray = fileData.fileArray || ko.observableArray([]);
-
-                var file = this.files[0];
+            var fileData = ko.utils.unwrapObservable(valueAccessor()) || {};
+            if (fileData.dataUrl) {
+                fileData.dataURL = fileData.dataUrl;
+            }
+            if (fileData.objectUrl) {
+                fileData.objectURL = fileData.objectUrl;
+            }
+            fileData.file = fileData.file || ko.observable();
+            fileData.fileArray = fileData.fileArray || ko.observableArray([]);
+            fileData.clear = fileData.clear || function() {
+                ['objectURL', 'base64String', 'binaryString', 'text', 'dataURL', 'arrayBuffer'].forEach(function(property, i) {
+                    if (fileData[property + 'Array'] && ko.isObservable(fileData[property + 'Array'])) {
+                        var values = fileData[property + 'Array'];
+                        while(values().length) {
+                            var val = values.splice(0, 1);
+                            if (property == 'objectURL') {
+                                windowURL.revokeObjectURL(val);
+                            }
+                        }
+                    }
+                    if (fileData[property] && ko.isObservable(fileData[property])) {
+                        fileData[property](null);
+                    }
+                });
+                element.value = '';
+                fileData.file(null);
                 fileData.fileArray([]);
-                if (file) {
-                    var fileArray = [];
-                    for(var i = 0; i < this.files.length; i++){ // FileList is not an array
-                        fileArray.push(this.files[i]);
-                    }
-                    fileData.fileArray(fileArray); // set it once for subscriptions to work properly
-                    fileData.file(file);
-                }
+            }
 
-                if (!fileData.clear) {
-                    fileData.clear = function() {
-                        ['objectURL', 'base64String', 'binaryString', 'text', 'dataURL', 'arrayBuffer'].forEach(function(property, i) {
-                            if (fileData[property + 'Array'] && ko.isObservable(fileData[property + 'Array'])) {
-                                var values = fileData[property + 'Array'];
-                                while(values().length) {
-                                    var val = values.splice(0, 1);
-                                    if (property == 'objectURL') {
-                                        windowURL.revokeObjectURL(val);
-                                    }
-                                }
-                            }
-                            if (fileData[property] && ko.isObservable(fileData[property])) {
-                                fileData[property](null);
-                            }
-                        });
-                        element.value = '';
-                        fileData.fileArray([]);
-                        fileData.file(null);
-                    }
-                }
-                if (ko.isObservable(valueAccessor())) {
-                    valueAccessor()(fileData);
-                }
-            };
-            element.onchange();
-            
-            ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
-                var fileData = ko.utils.unwrapObservable(valueAccessor()) || {};
-                fileData.clear = undefined;
-            });
-        },
-        update: function(element, valueAccessor, allBindingsAccessor) {
-
-            var fileData = ko.utils.unwrapObservable(valueAccessor());
-
-            function fillData(file, index){
+            function fillData(file, index, callback){
 
                 if (fileData.objectURL && ko.isObservable(fileData.objectURL)) {
                     var newUrl = file && windowURL.createObjectURL(file);
@@ -167,12 +138,26 @@
                     }
                 }
 
-                ['binaryString', 'text', 'dataURL', 'arrayBuffer'].forEach(function(property){
+                var fileProperties = ['binaryString', 'text', 'dataURL', 'arrayBuffer'];
+                var doneFileProperties = {};
+                var checkDoneFileProperties =  function(doneProperty){
+                    var done = true;
+                    doneFileProperties[doneProperty] = true;
+                    fileProperties.forEach(function(property){
+                        done = done && doneFileProperties[property];
+                    });
+                    if(done){
+                        callback();
+                    }
+                }
+                fileProperties.forEach(function(property){
                     var method = 'readAs' + (property.substr(0, 1).toUpperCase() + property.substr(1));
                     if (property != 'dataURL' && !(fileData[property] && ko.isObservable(fileData[property]))) {
+                        checkDoneFileProperties(property);
                         return true;
                     }
                     if (!file) {
+                        checkDoneFileProperties(property);
                         return true;
                     }
                     var reader = new FileReader();
@@ -189,6 +174,7 @@
                             }
                         }
                         fillDataToProperty(e.target.result, property);
+                        checkDoneFileProperties(property);
                         if (method == 'readAsDataURL' && (fileData.base64String || fileData.base64StringArray)) {
                             var resultParts = e.target.result.split(",");
                             if (resultParts.length === 2) {
@@ -200,9 +186,53 @@
                     reader[method](file);
                 });
             }
-            fileData.fileArray().forEach(function(file, index){
-                fillData(file, index);
-            })
+
+            fileData.fileArray.subscribe(function(fileArray){
+                if(!fileArray.length){
+                    valueAccessor().valueHasMutated();
+                    return;
+                }
+                var doneFiles = [];
+                var checkDoneFiles = function(doneFile){
+                    var done = true;
+                    doneFiles[doneFile] = true;
+                    for(var index in fileArray){
+                        done = done && doneFiles[index];
+                    }
+                    if(done){
+                        valueAccessor().valueHasMutated();
+                    }
+                }
+                fileArray.forEach(function(file, index){
+                    fillData(file, index, function(){
+                        checkDoneFiles(index);
+                    });
+                });
+            });
+
+            element.onchange = function() {
+
+                var file = this.files[0];
+                var fileArray = [];
+                if (file) {
+                    for(var i = 0; i < this.files.length; i++){ // FileList is not an array
+                        fileArray.push(this.files[i]);
+                    }
+                    fileData.file(file);
+                }
+                fileData.fileArray(fileArray); // set it once for subscriptions to work properly
+
+            };
+
+            ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
+                var fileData = ko.utils.unwrapObservable(valueAccessor()) || {};
+                fileData.clear = undefined;
+            });
+        },
+        update: function(element, valueAccessor, allBindingsAccessor) {
+
+            // var fileData = ko.utils.unwrapObservable(valueAccessor());
+
         }
     };
 
@@ -223,18 +253,14 @@
                     if (e.type == 'drop' && e.dataTransfer) {
                         var files = e.dataTransfer.files;
                         var file = files[0];
-                        fileData.fileArray([]);
+                        var fileArray = [];
                         if (file) {
-                            var fileArray = [];
                             for(var i = 0; i < files.length; i++){
                                 fileArray.push(files[i]);
                             }
-                            fileData.fileArray(fileArray);
                             fileData.file(file);
-                            if (ko.isObservable(valueAccessor())) {
-                                valueAccessor()(fileData);
-                            }
                         }
+                        fileData.fileArray(fileArray);
                     }
                 };
 
