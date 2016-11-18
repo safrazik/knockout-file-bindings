@@ -160,6 +160,10 @@
                         checkDoneFileProperties(property);
                         return true;
                     }
+                    if(index == 0 && fileData[property + 'Array'] && ko.isObservable(fileData[property + 'Array'])){
+                        fileData[property + 'Array']([]);
+                    }
+
                     var reader = new FileReader();
                     reader.onload = function(e) {
                         function fillDataToProperty(result, prop){
@@ -167,9 +171,6 @@
                                 fileData[prop](result);
                             }
                             if(fileData[prop + 'Array'] && ko.isObservable(fileData[prop + 'Array'])){
-                                if(index == 0){
-                                    fileData[prop + 'Array']([]);
-                                }
                                 fileData[prop + 'Array'].push(result);
                             }
                         }
@@ -230,9 +231,6 @@
             });
         },
         update: function(element, valueAccessor, allBindingsAccessor) {
-
-            // var fileData = ko.utils.unwrapObservable(valueAccessor());
-
         }
     };
 
