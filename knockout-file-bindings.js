@@ -162,6 +162,7 @@
                     }
                     if(index == 0 && fileData[property + 'Array'] && ko.isObservable(fileData[property + 'Array'])){
                         fileData[property + 'Array']([]);
+                        fileData['base64StringArray']([]);
                     }
 
                     var reader = new FileReader();
