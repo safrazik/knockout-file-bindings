@@ -151,8 +151,7 @@
                     }
                 }
                 fileProperties.forEach(function(property){
-                    var method = 'readAs' + (property.substr(0, 1).toUpperCase() + property.substr(1));
-                    if (property != 'dataURL' && !(fileData[property] && ko.isObservable(fileData[property]))) {
+                    if (!(fileData[property] && ko.isObservable(fileData[property])) && !(fileData[property + 'Array'] && ko.isObservable(fileData[property + 'Array']))) {
                         checkDoneFileProperties(property);
                         return true;
                     }
@@ -162,9 +161,14 @@
                     }
                     if(index == 0 && fileData[property + 'Array'] && ko.isObservable(fileData[property + 'Array'])){
                         fileData[property + 'Array']([]);
+                        // when base64String is enabled, dataURL is added if not exists (see code above)
+                        if(property == 'dataURL' && fileData.base64StringArray && ko.isObservable(fileData.base64StringArray)){
+                            fileData.base64StringArray([]);
+                        }
                     }
 
                     var reader = new FileReader();
+                    var method = 'readAs' + (property.substr(0, 1).toUpperCase() + property.substr(1));
                     reader.onload = function(e) {
                         function fillDataToProperty(result, prop){
                             if (index == 0 && fileData[prop] && ko.isObservable(fileData[prop])) {
@@ -174,14 +178,14 @@
                                 fileData[prop + 'Array'].push(result);
                             }
                         }
-                        fillDataToProperty(e.target.result, property);
-                        checkDoneFileProperties(property);
                         if (method == 'readAsDataURL' && (fileData.base64String || fileData.base64StringArray)) {
                             var resultParts = e.target.result.split(",");
                             if (resultParts.length === 2) {
                                 fillDataToProperty(resultParts[1], 'base64String');
                             }
                         }
+                        fillDataToProperty(e.target.result, property);
+                        checkDoneFileProperties(property);
                     };
 
                     reader[method](file);
