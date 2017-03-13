@@ -29,6 +29,7 @@
 	              buttonClass: 'btn btn-success',
 	              fileNameClass: 'disabled form-control',
 	              onClear: onClear,
+								onInvalidFileDrop: onInvalidFileDrop
 	            }" accept="image/*">
 	        </div>
 	    </div>
@@ -60,7 +61,11 @@
 <script src='http://cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js'></script><script src='knockout-file-bindings.js'></script>
 <script>
     var viewModel = {};
-    viewModel.fileData = ko.observable({ dataURL: ko.observable() });
+    viewModel.fileData = ko.observable({
+			dataURL: ko.observable(),
+			// can add "fileTypes" observable here, and it will override the "accept" attribute on the file input
+			// fileTypes: ko.observable('.xlsx,image/png,audio/*')
+		});
     viewModel.multiFileData = ko.observable({ dataURLArray: ko.observableArray() });
     viewModel.onClear = function (fileData) {
         if (confirm('Are you sure?')) {
@@ -72,6 +77,10 @@
         console.log(ko.toJSON(viewModel));
         debugger;
     };
+		viewModel.onInvalidFileDrop = function(fileData) {
+			alert(fileData.name + ': Invalid file type')
+			console.error(fileData);
+		};
     ko.applyBindings(viewModel);
 </script>
 

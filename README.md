@@ -19,7 +19,7 @@ viewModel.fileData().dataURL.subscribe(function(dataURL){
 });
 ```
 
-along with `dataURL`, you can have any of `bindaryString`, `text`,  `arrayBuffer` or `base64String` based on your needs. See [Anvanced Usage](#advanced-usage) section below
+along with `dataURL`, you can have any of `bindaryString`, `text`,  `arrayBuffer` or `base64String` based on your needs. See [Advanced Usage](#advanced-usage) section below
 
 
 **View**
@@ -88,7 +88,18 @@ viewModel.fileData = ko.observable({
   
   // a special observable (optional)
   base64String: ko.observable(), // just the base64 string, without mime type or anything else
-  
+
+  // a "file types" observable to denote acceptable file types (optional)
+  // accepts any string value that is valid for the `accept` attribute of a file input
+  // if provided, will override the `accept` attribute on the target file input
+  // if not provided, the value of the `accept` attribute will be used
+  fileTypes: ko.observable(),
+
+  onInvalidFileDrop: function(fileData) {
+    // do something with rejected file
+  },
+
+
   // you can have observable arrays for each of the properties above, useful in multiple file upload selection (see Multiple file Uploads section below)
   // in the format of xxxArray: ko.observableArray(),
   /* e.g: */ fileArray: ko.observableArray(), base64StringArray: ko.observableArray(),
@@ -105,7 +116,8 @@ viewModel.fileData().base64String.subscribe(function(base64String){
 ```
 
 Recommended:
-[Reading HTML5 files](http://www.html5rocks.com/en/tutorials/file/dndfiles/#toc-reading-files)
+[Reading HTML5 files](http://www.html5rocks.com/en/tutorials/file/dndfiles/#toc-reading-files),
+[More on accept attribute](https://www.w3schools.com/tags/att_input_accept.asp)
 
 **View**
 ```html

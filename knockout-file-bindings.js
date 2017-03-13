@@ -93,6 +93,10 @@
             }
             fileData.file = fileData.file || ko.observable();
             fileData.fileArray = fileData.fileArray || ko.observableArray([]);
+            var currentAcceptValue = element.getAttribute('accept');
+            fileData.fileTypes = fileData.fileTypes || ko.observable(currentAcceptValue);
+            element.setAttribute('accept', fileData.fileTypes());
+
             fileData.clear = fileData.clear || function() {
                 ['objectURL', 'base64String', 'binaryString', 'text', 'dataURL', 'arrayBuffer'].forEach(function(property, i) {
                     if (fileData[property + 'Array'] && ko.isObservable(fileData[property + 'Array'])) {
@@ -238,8 +242,43 @@
         }
     };
 
+    function matchFile(fileType, file) {
+      if(fileType.startsWith('.')) {
+        return file.name.endsWith(fileType);
+      } else if (fileType.endsWith('/*')) {
+        var prefix = fileType.slice(0, -1);
+        return file.type.startsWith(prefix);
+      } else {
+        return file.type === fileType;
+      }
+    }
+
+    function validateDroppedFileType(fileInput, file) {
+      if(fileInput) {
+        var accept = fileInput.getAttribute('accept');
+        if(accept) {
+          var fileMatched = false;
+          var fileTypes = accept.split(',');
+
+          for (var i = 0; i < fileTypes.length; i++) {
+            fileMatched |= matchFile(fileTypes[i], file);
+          }
+
+          return fileMatched;
+        }
+      }
+      return true;
+    }
+
     ko.bindingHandlers.fileDrag = {
         update: function(element, valueAccessor, allBindingsAccessor) {
+            var inputElements = element.getElementsByTagName('input');
+            var fileInput = null;
+
+            for(i=0; i<inputElements.length; i++) {
+              if(inputElements[i].type === 'file') fileInput = inputElements[i];
+            }
+
             var fileData = ko.utils.unwrapObservable(valueAccessor()) || {};
             if (!element.getAttribute("file-drag-injected")) {
                 addCssClass(element, 'filedrag');
@@ -254,14 +293,21 @@
                     }
                     if (e.type == 'drop' && e.dataTransfer) {
                         var files = e.dataTransfer.files;
-                        var file = files[0];
                         var fileArray = [];
-                        if (file) {
+                        if (files.length) {
                             for(var i = 0; i < files.length; i++){
-                                fileArray.push(files[i]);
+                              if(validateDroppedFileType(fileInput, files[i])) fileArray.push(files[i]);
+                              else {
+                                // handle bad file drop, fire off a file rejected event here
+                                var fileInputContext = ko.dataFor(fileInput);
+                                if(fileInputContext && typeof fileInputContext.onInvalidFileDrop === "function") {
+                                  fileInputContext.onInvalidFileDrop(files[i]);
+                                }
+                              }
                             }
-                            fileData.file(file);
+                            fileData.file(fileArray.length ? fileArray[0] : {});
                         }
+                        if(!fileArray.length) fileData.clear();
                         fileData.fileArray(fileArray);
                     }
                 };
