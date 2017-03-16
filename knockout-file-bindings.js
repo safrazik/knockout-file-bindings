@@ -294,20 +294,22 @@
                     if (e.type == 'drop' && e.dataTransfer) {
                         var files = e.dataTransfer.files;
                         var fileArray = [];
+                        var failedFiles = [];
                         if (files.length) {
                             for(var i = 0; i < files.length; i++){
                               if(validateDroppedFileType(fileInput, files[i])) fileArray.push(files[i]);
-                              else {
-                                // handle bad file drop, fire off a file rejected event here
-                                var fileInputContext = ko.dataFor(fileInput);
-                                if(fileInputContext && typeof fileInputContext.onInvalidFileDrop === "function") {
-                                  fileInputContext.onInvalidFileDrop(files[i]);
-                                }
-                              }
+                              else failedFiles.push(files[i]);
                             }
                             fileData.file(fileArray.length ? fileArray[0] : {});
                         }
                         if(!fileArray.length) fileData.clear();
+                        if(failedFiles.length) {
+                          // handle bad file drop, fire off a file rejected event here
+                          var fileInputContext = ko.dataFor(fileInput);
+                          if(fileInputContext && typeof fileInputContext.onInvalidFileDrop === "function") {
+                            fileInputContext.onInvalidFileDrop(failedFiles);
+                          }
+                        }
                         fileData.fileArray(fileArray);
                     }
                 };

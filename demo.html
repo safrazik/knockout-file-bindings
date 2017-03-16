@@ -51,6 +51,7 @@
 	              buttonClass: 'btn btn-success',
 	              fileNameClass: 'disabled form-control',
 	              onClear: onClear,
+								onInvalidFileDrop: onInvalidFileDrop
 	            }" accept="image/*">
 	        </div>
 	    </div>
@@ -77,8 +78,12 @@
         console.log(ko.toJSON(viewModel));
         debugger;
     };
-		viewModel.onInvalidFileDrop = function(fileData) {
-			alert(fileData.name + ': Invalid file type')
+		viewModel.onInvalidFileDrop = function(failedFiles) {
+			var fileNames = [];
+			for (var i = 0; i < failedFiles.length; i++) {
+				fileNames.push(failedFiles[i].name);
+			}
+			alert('Invalid file type: ' + fileNames.join(', '))
 			console.error(fileData);
 		};
     ko.applyBindings(viewModel);
