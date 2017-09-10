@@ -29,7 +29,7 @@
 	              buttonClass: 'btn btn-success',
 	              fileNameClass: 'disabled form-control',
 	              onClear: onClear,
-								onInvalidFileDrop: onInvalidFileDrop
+	              onInvalidFileDrop: onInvalidFileDrop
 	            }" accept="image/*">
 	        </div>
 	    </div>
@@ -39,9 +39,9 @@
 	<div class="well" data-bind="fileDrag: multiFileData">
 	    <div class="form-group row">
 	        <div class="col-md-6">
-	                  <!-- ko foreach: {data: multiFileData().dataURLArray, as: 'dataURL'} -->
-	                  <img style="height: 100px; margin: 5px;" class="img-rounded  thumb" data-bind="attr: { src: dataURL }, visible: dataURL">
-	                  <!-- /ko -->
+	            <!-- ko foreach: {data: multiFileData().dataURLArray, as: 'dataURL'} -->
+	            <img style="height: 100px; margin: 5px;" class="img-rounded  thumb" data-bind="attr: { src: dataURL }, visible: dataURL">
+	            <!-- /ko -->
 	            <div data-bind="ifnot: fileData().dataURL">
 	                <label class="drag-label">Drag files here</label>
 	            </div>
@@ -51,6 +51,7 @@
 	              buttonClass: 'btn btn-success',
 	              fileNameClass: 'disabled form-control',
 	              onClear: onClear,
+	              onInvalidFileDrop: onInvalidFileDrop
 	            }" accept="image/*">
 	        </div>
 	    </div>
@@ -62,10 +63,10 @@
 <script>
     var viewModel = {};
     viewModel.fileData = ko.observable({
-			dataURL: ko.observable(),
-			// can add "fileTypes" observable here, and it will override the "accept" attribute on the file input
-			// fileTypes: ko.observable('.xlsx,image/png,audio/*')
-		});
+        dataURL: ko.observable(),
+        // can add "fileTypes" observable here, and it will override the "accept" attribute on the file input
+        // fileTypes: ko.observable('.xlsx,image/png,audio/*')
+    });
     viewModel.multiFileData = ko.observable({ dataURLArray: ko.observableArray() });
     viewModel.onClear = function (fileData) {
         if (confirm('Are you sure?')) {
@@ -77,10 +78,15 @@
         console.log(ko.toJSON(viewModel));
         debugger;
     };
-		viewModel.onInvalidFileDrop = function(fileData) {
-			alert(fileData.name + ': Invalid file type')
-			console.error(fileData);
-		};
+    viewModel.onInvalidFileDrop = function(failedFiles) {
+        var fileNames = [];
+        for (var i = 0; i < failedFiles.length; i++) {
+            fileNames.push(failedFiles[i].name);
+        }
+        var message = 'Invalid file type: ' + fileNames.join(', ');
+        alert(message)
+        console.error(message);
+    };
     ko.applyBindings(viewModel);
 </script>
 
