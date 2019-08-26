@@ -1,10 +1,12 @@
-# Project Status:  🚨 Unmaintained 🚨
+For anyone looking for a better and modern file upload component (built for Vue Js), please have a look at:
 
-This project is no longer maintained. We will not be accepting pull requests, addressing issues, nor making future releases.
+### https://github.com/safrazik/vue-file-agent
 
+---
 
 knockout-file-bindings
 ======================
+> This project is no longer maintained. We will not be accepting pull requests, addressing issues, nor making future releases.
 
 HTML5 File bindings for knockout js with drag and drop support and custom input buttons
 
