@@ -144,6 +144,7 @@
 
                 var fileProperties = ['binaryString', 'text', 'dataURL', 'arrayBuffer'];
                 var doneFileProperties = {};
+                var doneFileArrayResult = {};
                 var checkDoneFileProperties =  function(doneProperty){
                     var done = true;
                     doneFileProperties[doneProperty] = true;
@@ -151,7 +152,7 @@
                         done = done && doneFileProperties[property];
                     });
                     if(done){
-                        callback();
+                        callback(doneFileArrayResult);
                     }
                 }
                 fileProperties.forEach(function(property){
@@ -179,7 +180,7 @@
                                 fileData[prop](result);
                             }
                             if(fileData[prop + 'Array'] && ko.isObservable(fileData[prop + 'Array'])){
-                                fileData[prop + 'Array'].push(result);
+                                doneFileArrayResult[prop] = result;
                             }
                         }
                         if (method == 'readAsDataURL' && (fileData.base64String || fileData.base64StringArray)) {
@@ -201,21 +202,40 @@
                     valueAccessor().valueHasMutated();
                     return;
                 }
-                var doneFiles = [];
-                var checkDoneFiles = function(doneFile){
+                var doneFileArrayResultMap = {};
+                var checkDoneFiles = function(doneIndex, doneFileArrayResult){
                     var done = true;
-                    doneFiles[doneFile] = true;
+                    doneFileArrayResultMap[doneIndex] = doneFileArrayResult;
                     for(var index in fileArray){
-                        done = done && doneFiles[index];
+                        done = done && doneFileArrayResultMap[index];
                     }
                     if(done){
+                        var resultGroupedArray = {};
+                        for(var key in doneFileArrayResultMap[0]){
+                            if(!resultGroupedArray[key]){
+                              resultGroupedArray[key] = [];
+                            }
+                        }
+                        for(var index in fileArray){
+                            var doneFileArrayResult = doneFileArrayResultMap[index];
+                            for(var prop in resultGroupedArray){
+                              resultGroupedArray[prop].push(doneFileArrayResult[prop]);
+                            }
+                        }
+                        for(var prop in resultGroupedArray){
+                          if(fileData[prop + 'Array'] && ko.isObservable(fileData[prop + 'Array'])){
+                            fileData[prop + 'Array'](resultGroupedArray[prop]);
+                          }
+                        }
                         valueAccessor().valueHasMutated();
                     }
                 }
                 fileArray.forEach(function(file, index){
-                    fillData(file, index, function(){
-                        checkDoneFiles(index);
+                  // setTimeout(function(){
+                    fillData(file, index, function(doneFileArrayResult){
+                      checkDoneFiles(index, doneFileArrayResult);
                     });
+                  // }, index == 1 ? 1000 : 0); // timeout for testing issue #35
                 });
             });
 

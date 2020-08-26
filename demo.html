@@ -76,6 +76,9 @@
     viewModel.debug = function () {
         window.viewModel = viewModel;
         console.log(ko.toJSON(viewModel));
+        console.log(viewModel.multiFileData())
+        console.log(viewModel.multiFileData().dataURLArray());
+        console.log(viewModel.multiFileData().fileArray());
         debugger;
     };
     viewModel.onInvalidFileDrop = function(failedFiles) {
