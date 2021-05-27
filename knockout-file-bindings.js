@@ -206,7 +206,7 @@
                 var checkDoneFiles = function(doneIndex, doneFileArrayResult){
                     var done = true;
                     doneFileArrayResultMap[doneIndex] = doneFileArrayResult;
-                    for(var index in fileArray){
+                    for(var index=0;index<fileArray.length;index++){
                         done = done && doneFileArrayResultMap[index];
                     }
                     if(done){
@@ -216,7 +216,7 @@
                               resultGroupedArray[key] = [];
                             }
                         }
-                        for(var index in fileArray){
+                        for(var index=0;index<fileArray.length;index++){
                             var doneFileArrayResult = doneFileArrayResultMap[index];
                             for(var prop in resultGroupedArray){
                               resultGroupedArray[prop].push(doneFileArrayResult[prop]);
